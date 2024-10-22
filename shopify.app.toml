@@ -1,0 +1,33 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "af40503afb9efb9b991a9ee8e39042b4"
+name = "99-frames-price-calculator"
+handle = "99-frames-price-calculator"
+application_url = "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "shini-test-store.myshopify.com"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://example.com/api/auth",
+  "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com/auth/callback",
+  "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com/auth/shopify/callback",
+  "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+[pos]
+embedded = false
