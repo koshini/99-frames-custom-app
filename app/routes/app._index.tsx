@@ -1,332 +1,329 @@
-import { useEffect } from "react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { useEffect, useState, useMemo } from "react";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useFetcher } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import {
   Page,
   Layout,
   Text,
   Card,
-  Button,
   BlockStack,
-  Box,
-  List,
-  Link,
+  Select,
+  Checkbox,
+  TextField,
   InlineStack,
 } from "@shopify/polaris";
-import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
+import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
+import { getVariants } from "app/utils/utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
-
-  return null;
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
+
+  const productTypes = [
+    "readymade",
+    "glass",
+    "mat",
+    "printing",
+    "mount",
+    "extras",
   ];
-  const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($input: ProductInput!) {
-        productCreate(input: $input) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
+  const productData: Record<string, any> = {};
+
+  for (const productType of productTypes) {
+    const response = await admin.graphql(
+      `#graphql
+        query {
+          products(first: 10, query: "product_type:${productType}") {
+            edges {
+              node {
+                id
+                title
+                handle
+                productType
+                variants (first: 100) {
+                  edges {
+                    node {
+                      price
+                      title
+                    }
+                  }
                 }
               }
             }
           }
         }
-      }`,
-    {
-      variables: {
-        input: {
-          title: `${color} Snowboard`,
-        },
-      },
-    },
-  );
-  const responseJson = await response.json();
+      `,
+    );
 
-  const product = responseJson.data!.productCreate!.product!;
-  const variantId = product.variants.edges[0]!.node!.id!;
+    const responseJson = await response.json();
+    const products = responseJson.data.products.edges.map(
+      (edge: any) => edge.node,
+    );
+    const variants = getVariants(products);
+    productData[productType] = variants;
+  }
 
-  const variantResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyRemixTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
-        }
-      }
-    }`,
-    {
-      variables: {
-        productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
-      },
-    },
-  );
-
-  const variantResponseJson = await variantResponse.json();
-
-  return json({
-    product: responseJson!.data!.productCreate!.product,
-    variant:
-      variantResponseJson!.data!.productVariantsBulkUpdate!.productVariants,
-  });
+  return json({ productData });
 };
 
 export default function Index() {
-  const fetcher = useFetcher<typeof action>();
-
-  const shopify = useAppBridge();
-  const isLoading =
-    ["loading", "submitting"].includes(fetcher.state) &&
-    fetcher.formMethod === "POST";
-  const productId = fetcher.data?.product?.id.replace(
-    "gid://shopify/Product/",
-    "",
-  );
+  const { productData } = useLoaderData<typeof loader>();
+  const [selectedOptions, setSelectedOptions] = useState<
+    Record<string, string>
+  >({});
+  const [dimensions, setDimensions] = useState({ width: "12", length: "24" });
+  const [circumference, setCircumference] = useState(0);
 
   useEffect(() => {
-    if (productId) {
-      shopify.toast.show("Product created");
+    const width = parseFloat(dimensions.width);
+    const length = parseFloat(dimensions.length);
+    if (!isNaN(width) && !isNaN(length)) {
+      setCircumference(2 * (width + length));
+    } else {
+      setCircumference(0);
     }
-  }, [productId, shopify]);
-  const generateProduct = () => fetcher.submit({}, { method: "POST" });
+  }, [dimensions]);
+
+  // This effect will run once on component mount to set the initial circumference
+  useEffect(() => {
+    setCircumference(2 * (12 + 24));
+  }, []);
+
+  const handleDimensionChange =
+    (dimension: "width" | "length") => (value: string) => {
+      setDimensions((prev) => ({ ...prev, [dimension]: value }));
+    };
+
+  const total = useMemo(() => {
+    let sum = 0;
+
+    // Add prices from selected dropdowns
+    Object.entries(selectedOptions).forEach(([key, value]) => {
+      if (!key.startsWith("extras") && value) {
+        const [productType, productTitle] = key.split("-");
+        const product = productData[productType].find(
+          (p: any) => p.title === productTitle,
+        );
+        if (product) {
+          const option = product.options.find(
+            (o: any) => o.optionTitle === value,
+          );
+          if (option) {
+            sum += parseFloat(option.price);
+          }
+        }
+      }
+    });
+
+    // Add prices from checked extras
+    productData["extras"].forEach((product: any) => {
+      product.options.forEach((option: any) => {
+        if (
+          selectedOptions[`extras-${product.title}-${option.optionTitle}`] ===
+          "true"
+        ) {
+          sum += parseFloat(option.price) * circumference;
+        }
+      });
+    });
+
+    return sum;
+  }, [circumference, selectedOptions, productData]);
 
   return (
     <Page>
-      <TitleBar title="Remix app template">
-        <button variant="primary" onClick={generateProduct}>
-          Generate a product
-        </button>
-      </TitleBar>
+      <TitleBar title="Order Generator"></TitleBar>
       <BlockStack gap="500">
         <Layout>
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    Congrats on creating a new Shopify app 🎉
-                  </Text>
-                  <Text variant="bodyMd" as="p">
-                    This embedded app template uses{" "}
-                    <Link
-                      url="https://shopify.dev/docs/apps/tools/app-bridge"
-                      target="_blank"
-                      removeUnderline
-                    >
-                      App Bridge
-                    </Link>{" "}
-                    interface examples like an{" "}
-                    <Link url="/app/additional" removeUnderline>
-                      additional page in the app nav
-                    </Link>
-                    , as well as an{" "}
-                    <Link
-                      url="https://shopify.dev/docs/api/admin-graphql"
-                      target="_blank"
-                      removeUnderline
-                    >
-                      Admin GraphQL
-                    </Link>{" "}
-                    mutation demo, to provide a starting point for app
-                    development.
-                  </Text>
+                {/* Dimensions section */}
+                <Text as="h3" variant="headingMd">
+                  Dimensions
+                </Text>
+                <BlockStack gap="300">
+                  <InlineStack gap="300">
+                    <TextField
+                      label="Width"
+                      type="number"
+                      value={dimensions.width}
+                      onChange={handleDimensionChange("width")}
+                      autoComplete="off"
+                    />
+                    <TextField
+                      label="Length"
+                      type="number"
+                      value={dimensions.length}
+                      onChange={handleDimensionChange("length")}
+                      autoComplete="off"
+                    />
+                  </InlineStack>
+                  <Text as="p">Circumference: {circumference.toFixed(2)}</Text>
                 </BlockStack>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingMd">
-                    Get started with products
-                  </Text>
-                  <Text as="p" variant="bodyMd">
-                    Generate a product with GraphQL and get the JSON output for
-                    that product. Learn more about the{" "}
-                    <Link
-                      url="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-                      target="_blank"
-                      removeUnderline
-                    >
-                      productCreate
-                    </Link>{" "}
-                    mutation in our API references.
-                  </Text>
-                </BlockStack>
-                <InlineStack gap="300">
-                  <Button loading={isLoading} onClick={generateProduct}>
-                    Generate a product
-                  </Button>
-                  {fetcher.data?.product && (
-                    <Button
-                      url={`shopify:admin/products/${productId}`}
-                      target="_blank"
-                      variant="plain"
-                    >
-                      View product
-                    </Button>
-                  )}
+                <Text as="h3" variant="headingMd">
+                  Selections
+                </Text>
+                <InlineStack gap="500">
+                  {/* Readymade Products */}
+                  <BlockStack gap="300">
+                    {productData.readymade.map(
+                      (product: any, index: number) => (
+                        <Select
+                          key={`readymade-${index}`}
+                          label={product.title}
+                          options={product.options.map((option: any) => ({
+                            label: `${option.optionTitle} - $${option.price}`,
+                            value: option.optionTitle,
+                          }))}
+                          onChange={(value) => {
+                            setSelectedOptions((prev) => ({
+                              ...prev,
+                              [`readymade-${product.title}`]: value,
+                            }));
+                          }}
+                          value={
+                            selectedOptions[`readymade-${product.title}`] || ""
+                          }
+                          placeholder="Select an option"
+                        />
+                      ),
+                    )}
+                  </BlockStack>
+
+                  {/* Glass Products */}
+                  <BlockStack gap="300">
+                    {productData.glass.map((product: any, index: number) => (
+                      <Select
+                        key={`glass-${index}`}
+                        label={product.title}
+                        options={product.options.map((option: any) => ({
+                          label: `${option.optionTitle} - $${option.price}`,
+                          value: option.optionTitle,
+                        }))}
+                        onChange={(value) => {
+                          setSelectedOptions((prev) => ({
+                            ...prev,
+                            [`glass-${product.title}`]: value,
+                          }));
+                        }}
+                        value={selectedOptions[`glass-${product.title}`] || ""}
+                        placeholder="Select an option"
+                      />
+                    ))}
+                  </BlockStack>
+
+                  {/* Mat Products */}
+                  <BlockStack gap="300">
+                    {productData.mat.map((product: any, index: number) => (
+                      <Select
+                        key={`mat-${index}`}
+                        label={product.title}
+                        options={product.options.map((option: any) => ({
+                          label: `${option.optionTitle} - $${option.price}`,
+                          value: option.optionTitle,
+                        }))}
+                        onChange={(value) => {
+                          setSelectedOptions((prev) => ({
+                            ...prev,
+                            [`mat-${product.title}`]: value,
+                          }));
+                        }}
+                        value={selectedOptions[`mat-${product.title}`] || ""}
+                        placeholder="Select an option"
+                      />
+                    ))}
+                  </BlockStack>
+
+                  {/* Printing Products */}
+                  <BlockStack gap="300">
+                    {productData.printing.map((product: any, index: number) => (
+                      <Select
+                        key={`printing-${index}`}
+                        label={product.title}
+                        options={product.options.map((option: any) => ({
+                          label: `${option.optionTitle} - $${option.price}`,
+                          value: option.optionTitle,
+                        }))}
+                        onChange={(value) => {
+                          setSelectedOptions((prev) => ({
+                            ...prev,
+                            [`printing-${product.title}`]: value,
+                          }));
+                        }}
+                        value={
+                          selectedOptions[`printing-${product.title}`] || ""
+                        }
+                        placeholder="Select an option"
+                      />
+                    ))}
+                  </BlockStack>
+
+                  {/* Mount Products */}
+                  <BlockStack gap="300">
+                    {productData.mount.map((product: any, index: number) => (
+                      <Select
+                        key={`mount-${index}`}
+                        label={product.title}
+                        options={product.options.map((option: any) => ({
+                          label: `${option.optionTitle} - $${option.price}`,
+                          value: option.optionTitle,
+                        }))}
+                        onChange={(value) => {
+                          setSelectedOptions((prev) => ({
+                            ...prev,
+                            [`mount-${product.title}`]: value,
+                          }));
+                        }}
+                        value={selectedOptions[`mount-${product.title}`] || ""}
+                        placeholder="Select an option"
+                      />
+                    ))}
+                  </BlockStack>
+
+                  {/* Extras Products */}
+                  <InlineStack gap="300">
+                    {productData.extras.map((product: any, index: number) => (
+                      <div key={`extras-${index}`}>
+                        <Text as="p" variant="headingSm">
+                          {product.title}
+                        </Text>
+                        {product.options.map(
+                          (option: any, optionIndex: number) => (
+                            <Checkbox
+                              key={`extras-${index}-${optionIndex}`}
+                              label={`$${option.price}`}
+                              checked={
+                                selectedOptions[
+                                  `extras-${product.title}-${option.optionTitle}`
+                                ] === "true"
+                              }
+                              onChange={(checked) => {
+                                setSelectedOptions((prev) => ({
+                                  ...prev,
+                                  [`extras-${product.title}-${option.optionTitle}`]:
+                                    checked.toString(),
+                                }));
+                              }}
+                            />
+                          ),
+                        )}
+                      </div>
+                    ))}
+                  </InlineStack>
                 </InlineStack>
-                {fetcher.data?.product && (
-                  <>
-                    <Text as="h3" variant="headingMd">
-                      {" "}
-                      productCreate mutation
-                    </Text>
-                    <Box
-                      padding="400"
-                      background="bg-surface-active"
-                      borderWidth="025"
-                      borderRadius="200"
-                      borderColor="border"
-                      overflowX="scroll"
-                    >
-                      <pre style={{ margin: 0 }}>
-                        <code>
-                          {JSON.stringify(fetcher.data.product, null, 2)}
-                        </code>
-                      </pre>
-                    </Box>
-                    <Text as="h3" variant="headingMd">
-                      {" "}
-                      productVariantsBulkUpdate mutation
-                    </Text>
-                    <Box
-                      padding="400"
-                      background="bg-surface-active"
-                      borderWidth="025"
-                      borderRadius="200"
-                      borderColor="border"
-                      overflowX="scroll"
-                    >
-                      <pre style={{ margin: 0 }}>
-                        <code>
-                          {JSON.stringify(fetcher.data.variant, null, 2)}
-                        </code>
-                      </pre>
-                    </Box>
-                  </>
-                )}
+                {/* Total section */}
+                <div>
+                  <Text as="h3" variant="headingMd">
+                    Total
+                  </Text>
+                  <Text variant="bodyLg" as="p">
+                    ${total.toFixed(2)}
+                  </Text>
+                </div>
               </BlockStack>
             </Card>
-          </Layout.Section>
-          <Layout.Section variant="oneThird">
-            <BlockStack gap="500">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    App template specs
-                  </Text>
-                  <BlockStack gap="200">
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Framework
-                      </Text>
-                      <Link
-                        url="https://remix.run"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        Remix
-                      </Link>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Database
-                      </Text>
-                      <Link
-                        url="https://www.prisma.io/"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        Prisma
-                      </Link>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Interface
-                      </Text>
-                      <span>
-                        <Link
-                          url="https://polaris.shopify.com"
-                          target="_blank"
-                          removeUnderline
-                        >
-                          Polaris
-                        </Link>
-                        {", "}
-                        <Link
-                          url="https://shopify.dev/docs/apps/tools/app-bridge"
-                          target="_blank"
-                          removeUnderline
-                        >
-                          App Bridge
-                        </Link>
-                      </span>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        API
-                      </Text>
-                      <Link
-                        url="https://shopify.dev/docs/api/admin-graphql"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        GraphQL API
-                      </Link>
-                    </InlineStack>
-                  </BlockStack>
-                </BlockStack>
-              </Card>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    Next steps
-                  </Text>
-                  <List>
-                    <List.Item>
-                      Build an{" "}
-                      <Link
-                        url="https://shopify.dev/docs/apps/getting-started/build-app-example"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        {" "}
-                        example app
-                      </Link>{" "}
-                      to get started
-                    </List.Item>
-                    <List.Item>
-                      Explore Shopify’s API with{" "}
-                      <Link
-                        url="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        GraphiQL
-                      </Link>
-                    </List.Item>
-                  </List>
-                </BlockStack>
-              </Card>
-            </BlockStack>
           </Layout.Section>
         </Layout>
       </BlockStack>

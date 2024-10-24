@@ -3,7 +3,7 @@
 client_id = "af40503afb9efb9b991a9ee8e39042b4"
 name = "99-frames-price-calculator"
 handle = "99-frames-price-calculator"
-application_url = "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com"
+application_url = "https://pizza-healthy-lead-sys.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,33 @@ scopes = "write_products"
 [auth]
 redirect_urls = [
   "https://example.com/api/auth",
-  "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com/auth/callback",
-  "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com/auth/shopify/callback",
-  "https://palestinian-coordination-nil-kazakhstan.trycloudflare.com/api/auth/callback"
+  "https://throughout-critics-sharp-mercury.trycloudflare.com/auth/callback",
+  "https://throughout-critics-sharp-mercury.trycloudflare.com/auth/shopify/callback",
+  "https://throughout-critics-sharp-mercury.trycloudflare.com/api/auth/callback",
+  "https://cheat-agree-determine-strict.trycloudflare.com/auth/callback",
+  "https://cheat-agree-determine-strict.trycloudflare.com/auth/shopify/callback",
+  "https://cheat-agree-determine-strict.trycloudflare.com/api/auth/callback",
+  "https://qty-sms-enhanced-phase.trycloudflare.com/auth/callback",
+  "https://qty-sms-enhanced-phase.trycloudflare.com/auth/shopify/callback",
+  "https://qty-sms-enhanced-phase.trycloudflare.com/api/auth/callback",
+  "https://further-comparison-alternatives-nasa.trycloudflare.com/auth/callback",
+  "https://further-comparison-alternatives-nasa.trycloudflare.com/auth/shopify/callback",
+  "https://further-comparison-alternatives-nasa.trycloudflare.com/api/auth/callback",
+  "https://improve-poetry-talking-wants.trycloudflare.com/auth/callback",
+  "https://improve-poetry-talking-wants.trycloudflare.com/auth/shopify/callback",
+  "https://improve-poetry-talking-wants.trycloudflare.com/api/auth/callback",
+  "https://demo-anywhere-probe-visited.trycloudflare.com/auth/callback",
+  "https://demo-anywhere-probe-visited.trycloudflare.com/auth/shopify/callback",
+  "https://demo-anywhere-probe-visited.trycloudflare.com/api/auth/callback",
+  "https://vids-achievement-supply-gdp.trycloudflare.com/auth/callback",
+  "https://vids-achievement-supply-gdp.trycloudflare.com/auth/shopify/callback",
+  "https://vids-achievement-supply-gdp.trycloudflare.com/api/auth/callback",
+  "https://-popular-lotus-retrieve.trycloudflare.com/auth/callback",
+  "https://-popular-lotus-retrieve.trycloudflare.com/auth/shopify/callback",
+  "https://-popular-lotus-retrieve.trycloudflare.com/api/auth/callback",
+  "https://pizza-healthy-lead-sys.trycloudflare.com/auth/callback",
+  "https://pizza-healthy-lead-sys.trycloudflare.com/auth/shopify/callback",
+  "https://pizza-healthy-lead-sys.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
