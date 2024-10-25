@@ -3,7 +3,7 @@
 client_id = "af40503afb9efb9b991a9ee8e39042b4"
 name = "99-frames-price-calculator"
 handle = "99-frames-price-calculator"
-application_url = "https://pizza-healthy-lead-sys.trycloudflare.com"
+application_url = "https://pt-closer-le-nd.trycloudflare.com"
 embedded = true
 
 [build]
@@ -43,7 +43,16 @@ redirect_urls = [
   "https://-popular-lotus-retrieve.trycloudflare.com/api/auth/callback",
   "https://pizza-healthy-lead-sys.trycloudflare.com/auth/callback",
   "https://pizza-healthy-lead-sys.trycloudflare.com/auth/shopify/callback",
-  "https://pizza-healthy-lead-sys.trycloudflare.com/api/auth/callback"
+  "https://pizza-healthy-lead-sys.trycloudflare.com/api/auth/callback",
+  "https://performs-interaction-luther-considerations.trycloudflare.com/auth/callback",
+  "https://performs-interaction-luther-considerations.trycloudflare.com/auth/shopify/callback",
+  "https://performs-interaction-luther-considerations.trycloudflare.com/api/auth/callback",
+  "https://constitution-hiring-gui-encoding.trycloudflare.com/auth/callback",
+  "https://constitution-hiring-gui-encoding.trycloudflare.com/auth/shopify/callback",
+  "https://constitution-hiring-gui-encoding.trycloudflare.com/api/auth/callback",
+  "https://pt-closer-le-nd.trycloudflare.com/auth/callback",
+  "https://pt-closer-le-nd.trycloudflare.com/auth/shopify/callback",
+  "https://pt-closer-le-nd.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
