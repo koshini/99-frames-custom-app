@@ -1,0 +1,31 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "af40503afb9efb9b991a9ee8e39042b4"
+name = "99-frames-price-calculator"
+handle = "99-frames-price-calculator"
+application_url = "https://99-frames-price-calculator.fly.dev"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "shini-test-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,write_customers,write_products"
+
+[auth]
+redirect_urls = [
+  "https://99-frames-price-calculator.fly.dev/auth/callback",
+]
+
+[webhooks]
+api_version = "2024-10"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+[pos]
+embedded = false

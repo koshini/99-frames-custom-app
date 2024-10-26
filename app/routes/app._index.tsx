@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import {
@@ -20,6 +20,14 @@ import {
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { getVariants } from "app/utils/utils";
+import Customer from "../components/Customer";
+
+interface Customer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -71,6 +79,38 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ productData });
 };
 
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { admin } = await authenticate.admin(request);
+  const formData = await request.formData();
+  const phoneNumber = formData.get("phoneNumber");
+
+  const response = await admin.graphql(
+    `
+      query GetCustomersByPhone($query: String!) {
+        customers(first: 10, query: $query) {
+          edges {
+            node {
+              id
+              firstName
+              lastName
+              phone
+            }
+          }
+        }
+      }
+    `,
+    {
+      variables: {
+        query: `phone:*${phoneNumber}*`,
+      },
+    },
+  );
+
+  const responseJson = await response.json();
+  console.log(JSON.stringify(responseJson.data.customers));
+  return json({ customer: responseJson.data.customers });
+};
+
 export default function Index() {
   const { productData } = useLoaderData<typeof loader>();
   const [selectedOptions, setSelectedOptions] = useState<
@@ -86,6 +126,7 @@ export default function Index() {
   const [discount, setDiscount] = useState("0");
   const [total, setTotal] = useState(0);
   const [adjustedTotal, setAdjustedTotal] = useState(0);
+  const [orderDetails, setOrderDetails] = useState<any[]>([]); // New state for order details
 
   useEffect(() => {
     const width = parseFloat(dimensions.width);
@@ -185,16 +226,37 @@ export default function Index() {
   }, [resetFields]);
 
   const handleAddToOrder = useCallback(() => {
+    const newOrder = {
+      selectedOptions,
+      dimensions,
+      mouldingUnitPrice,
+      matType,
+      customMatPrice,
+      labour,
+      subtotal,
+    };
+    setOrderDetails((prevOrders) => [...prevOrders, newOrder]); // Update order details
     resetFields();
     setTotal((prev) => prev + subtotal);
-  }, [resetFields, subtotal]);
+  }, [
+    resetFields,
+    subtotal,
+    selectedOptions,
+    dimensions,
+    mouldingUnitPrice,
+    matType,
+    customMatPrice,
+    labour,
+  ]);
+
+  console.log(orderDetails);
 
   return (
     <Page>
       <TitleBar title="Order Generator" />
       <PageActions
         primaryAction={{
-          content: "Reset All",
+          content: "Reset Order",
           onAction: resetEverything,
         }}
       />
@@ -458,27 +520,30 @@ export default function Index() {
             </Card>
           </Layout.Section>
           <Layout.Section variant="oneThird">
-            <Card>
-              <BlockStack gap="400">
-                <Text as="h3" variant="headingMd">
-                  Total: ${total.toFixed(2)}
-                </Text>
-                <Divider />
-                <TextField
-                  label="Discount"
-                  type="number"
-                  prefix="$"
-                  value={discount}
-                  onChange={(value) => setDiscount(value)}
-                  autoComplete="off"
-                />
-                {adjustedTotal > 0 && (
+            <BlockStack gap="500">
+              <Card>
+                <BlockStack gap="400">
                   <Text as="h3" variant="headingMd">
-                    Adjusted Total: ${adjustedTotal.toFixed(2)}
+                    Total: ${total.toFixed(2)}
                   </Text>
-                )}
-              </BlockStack>
-            </Card>
+                  <Divider />
+                  <TextField
+                    label="Discount"
+                    type="number"
+                    prefix="$"
+                    value={discount}
+                    onChange={(value) => setDiscount(value)}
+                    autoComplete="off"
+                  />
+                  {adjustedTotal > 0 && (
+                    <Text as="h3" variant="headingMd">
+                      Adjusted Total: ${adjustedTotal.toFixed(2)}
+                    </Text>
+                  )}
+                </BlockStack>
+              </Card>
+              <Customer />
+            </BlockStack>
           </Layout.Section>
         </Layout>
       </BlockStack>

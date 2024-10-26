@@ -1,0 +1,28 @@
+# fly.toml app configuration file generated for 99-frames-price-calculator on 2024-10-26T00:08:11-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = '99-frames-price-calculator'
+primary_region = 'yyz'
+
+[build]
+
+[env]
+  PORT = '3000'
+  SCOPES = 'read_customers,write_customers,write_products'
+  SHOPIFY_API_KEY = 'af40503afb9efb9b991a9ee8e39042b4'
+  SHOPIFY_APP_URL = 'https://99-frames-price-calculator.fly.dev'
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
