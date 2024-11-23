@@ -7,7 +7,6 @@ import {
   Link,
   BlockStack,
   Icon,
-  InlineStack,
 } from "@shopify/polaris";
 import { SearchIcon } from "@shopify/polaris-icons";
 
@@ -22,7 +21,7 @@ const CustomerSearch = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  const [inputValue, setInputValue] = useState("");
+  const [searchValue, setSearchValue] = useState("");
   const [options, setOptions] = useState<
     Array<{ value: string; label: string; customer: Customer }>
   >([]);
@@ -32,7 +31,7 @@ const CustomerSearch = () => {
 
   const updateText = useCallback(
     (value: string) => {
-      setInputValue(value);
+      setSearchValue(value);
       if (value === "") {
         setOptions([]);
         return;
@@ -42,10 +41,10 @@ const CustomerSearch = () => {
       }
       debounceTimerRef.current = setTimeout(() => {
         fetcher.submit(
-          { phoneNumber: value },
+          { searchQuery: value },
           { method: "post", action: "/app?index" },
         );
-      }, 1000);
+      }, 500);
     },
     [fetcher],
   );
@@ -85,11 +84,11 @@ const CustomerSearch = () => {
         );
         if (matchedOption) {
           setSelectedCustomer(matchedOption.customer);
-          setInputValue(matchedOption.label);
+          setSearchValue(matchedOption.label);
         }
       } else {
         setSelectedCustomer(null);
-        setInputValue("");
+        setSearchValue("");
       }
     },
     [options],
@@ -98,8 +97,8 @@ const CustomerSearch = () => {
   const textField = (
     <Autocomplete.TextField
       onChange={updateText}
-      label="Customers"
-      value={inputValue}
+      label="Customer"
+      value={searchValue}
       prefix={<Icon source={SearchIcon} tone="base" />}
       placeholder="Search"
       autoComplete="off"
@@ -110,10 +109,8 @@ const CustomerSearch = () => {
     <Card>
       <BlockStack gap="300">
         <fetcher.Form method="post">
-          <InlineStack gap="300" align="end">
-            <Link url="shopify://admin/customers/new">Create new customer</Link>
-          </InlineStack>
-          <Text as="h3">Search existing customer by phone number</Text>
+          <Text as="h3">Search existing customer or </Text>
+          <Link url="shopify://admin/customers/new">create new customer</Link>
           <Autocomplete
             options={options}
             selected={selectedCustomer ? [selectedCustomer.phone] : []}

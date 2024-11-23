@@ -3,7 +3,7 @@
 client_id = "af40503afb9efb9b991a9ee8e39042b4"
 name = "99-frames-price-calculator"
 handle = "99-frames-price-calculator"
-application_url = "https://99-frames-price-calculator.fly.dev"
+application_url = "https://citations-records-contains-temperature.trycloudflare.com"
 embedded = true
 
 [build]
@@ -13,30 +13,14 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_customers,write_customers,write_products"
+scopes = "read_customers,read_orders,write_customers,write_orders,write_products"
 
 [auth]
 redirect_urls = [
   "https://99-frames-price-calculator.fly.dev/auth/callback",
-  "https://example.com/api/auth",
-  "https://ram-american-rw-packets.trycloudflare.com/auth/callback",
-  "https://ram-american-rw-packets.trycloudflare.com/auth/shopify/callback",
-  "https://ram-american-rw-packets.trycloudflare.com/api/auth/callback",
-  "https://example-necessarily-worlds-frames.trycloudflare.com/auth/callback",
-  "https://example-necessarily-worlds-frames.trycloudflare.com/auth/shopify/callback",
-  "https://example-necessarily-worlds-frames.trycloudflare.com/api/auth/callback",
-  "https://mutual-natural-sunshine-rid.trycloudflare.com/auth/callback",
-  "https://mutual-natural-sunshine-rid.trycloudflare.com/auth/shopify/callback",
-  "https://mutual-natural-sunshine-rid.trycloudflare.com/api/auth/callback",
-  "https://linux-angle-fares-agent.trycloudflare.com/auth/callback",
-  "https://linux-angle-fares-agent.trycloudflare.com/auth/shopify/callback",
-  "https://linux-angle-fares-agent.trycloudflare.com/api/auth/callback",
-  "https://monthly-protocol-indianapolis-recorded.trycloudflare.com/auth/callback",
-  "https://monthly-protocol-indianapolis-recorded.trycloudflare.com/auth/shopify/callback",
-  "https://monthly-protocol-indianapolis-recorded.trycloudflare.com/api/auth/callback",
-  "https://anna-readily-reynolds-wichita.trycloudflare.com/auth/callback",
-  "https://anna-readily-reynolds-wichita.trycloudflare.com/auth/shopify/callback",
-  "https://anna-readily-reynolds-wichita.trycloudflare.com/api/auth/callback"
+  "https://citations-records-contains-temperature.trycloudflare.com/auth/callback",
+  "https://citations-records-contains-temperature.trycloudflare.com/auth/shopify/callback",
+  "https://citations-records-contains-temperature.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

@@ -12,7 +12,6 @@ import {
   Checkbox,
   TextField,
   InlineStack,
-  PageActions,
   RadioButton,
   Button,
   Divider,
@@ -82,11 +81,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   const formData = await request.formData();
-  const phoneNumber = formData.get("phoneNumber");
+  const searchQuery = formData.get("searchQuery");
 
   const response = await admin.graphql(
     `
-      query GetCustomersByPhone($query: String!) {
+      query GetCustomers($query: String!) {
         customers(first: 10, query: $query) {
           edges {
             node {
@@ -101,13 +100,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     `,
     {
       variables: {
-        query: `phone:*${phoneNumber}*`,
+        query: searchQuery,
       },
     },
   );
 
   const responseJson = await response.json();
-  console.log(JSON.stringify(responseJson.data.customers));
   return json({ customer: responseJson.data.customers });
 };
 
@@ -116,7 +114,7 @@ export default function Index() {
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string>
   >({});
-  const [dimensions, setDimensions] = useState({ width: "12", length: "24" });
+  const [dimensions, setDimensions] = useState({ width: "0", length: "0" });
   const [circumference, setCircumference] = useState(0);
   const [mouldingUnitPrice, setMouldingUnitPrice] = useState("0");
   const [matType, setMatType] = useState("stock");
@@ -137,10 +135,6 @@ export default function Index() {
       setCircumference(0);
     }
   }, [dimensions]);
-
-  useEffect(() => {
-    setCircumference(2 * (12 + 24));
-  }, []);
 
   const handleDimensionChange =
     (dimension: "width" | "length") => (value: string) => {
@@ -183,7 +177,9 @@ export default function Index() {
         }
       });
     });
-    sum = sum + circumference * parseFloat(mouldingUnitPrice) || 0;
+
+    const minOrder = Math.max(96, Math.ceil(circumference / 96) * 96);
+    sum = sum + minOrder * parseFloat(mouldingUnitPrice) || 0;
 
     if (matType === "custom") {
       sum += parseFloat(customMatPrice) || 0;
@@ -211,7 +207,7 @@ export default function Index() {
 
   const resetFields = useCallback(() => {
     setSelectedOptions({});
-    setDimensions({ width: "12", length: "24" });
+    setDimensions({ width: "0", length: "0" });
     setMouldingUnitPrice("0");
     setMatType("stock");
     setCustomMatPrice("0");
@@ -223,49 +219,49 @@ export default function Index() {
     setDiscount("0");
     setTotal(0);
     setAdjustedTotal(0);
+    setOrderDetails([]);
   }, [resetFields]);
 
   const handleAddToOrder = useCallback(() => {
     const newOrder = {
-      selectedOptions,
-      dimensions,
+      ...selectedOptions,
+      ...dimensions,
       mouldingUnitPrice,
-      matType,
       customMatPrice,
       labour,
       subtotal,
     };
-    setOrderDetails((prevOrders) => [...prevOrders, newOrder]); // Update order details
+
+    setOrderDetails((prevOrders) => {
+      const updatedOrders = [...prevOrders, newOrder];
+      return updatedOrders;
+    });
+
     resetFields();
     setTotal((prev) => prev + subtotal);
   }, [
-    resetFields,
-    subtotal,
     selectedOptions,
     dimensions,
     mouldingUnitPrice,
-    matType,
     customMatPrice,
     labour,
+    subtotal,
+    resetFields,
   ]);
 
-  console.log(orderDetails);
+  const handleCreateOrder = () => {
+    console.log(orderDetails);
+    // TODO: create order mutation
+  };
 
   return (
     <Page>
       <TitleBar title="Order Generator" />
-      <PageActions
-        primaryAction={{
-          content: "Reset Order",
-          onAction: resetEverything,
-        }}
-      />
       <BlockStack gap="500">
         <Layout>
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
-                {/* Readymade Products */}
                 <Text as="h3" variant="headingMd">
                   Readymade
                 </Text>
@@ -524,6 +520,25 @@ export default function Index() {
               <Card>
                 <BlockStack gap="400">
                   <Text as="h3" variant="headingMd">
+                    Order Details
+                  </Text>
+                  <BlockStack gap="300">
+                    {orderDetails.map((order, index) => (
+                      <>
+                        <Text key={index} as="p">
+                          {Object.entries(order)
+                            .filter(([key, value]) => parseFloat(value) !== 0)
+                            .map(([key, value]) => (
+                              <Text key={key}>
+                                {key}: {value}
+                              </Text>
+                            ))}
+                        </Text>
+                        <Divider />
+                      </>
+                    ))}
+                  </BlockStack>
+                  <Text as="h3" variant="headingMd">
                     Total: ${total.toFixed(2)}
                   </Text>
                   <Divider />
@@ -543,6 +558,12 @@ export default function Index() {
                 </BlockStack>
               </Card>
               <Customer />
+              <Button variant="primary" onClick={handleCreateOrder}>
+                Create Order
+              </Button>
+              <Button tone="critical" onClick={resetEverything}>
+                Reset Order
+              </Button>
             </BlockStack>
           </Layout.Section>
         </Layout>
