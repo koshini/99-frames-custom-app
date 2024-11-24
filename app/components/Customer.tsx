@@ -10,17 +10,14 @@ import {
 } from "@shopify/polaris";
 import { SearchIcon } from "@shopify/polaris-icons";
 
-interface Customer {
+export interface Customer {
   id: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
 }
 
-const CustomerSearch = () => {
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null,
-  );
+export function CustomerSearch({ selectedCustomer, handleSelect }) {
   const [searchValue, setSearchValue] = useState("");
   const [options, setOptions] = useState<
     Array<{ value: string; label: string; customer: Customer }>
@@ -83,15 +80,15 @@ const CustomerSearch = () => {
           (option) => option.value === selected[0],
         );
         if (matchedOption) {
-          setSelectedCustomer(matchedOption.customer);
+          handleSelect(matchedOption.customer);
           setSearchValue(matchedOption.label);
         }
       } else {
-        setSelectedCustomer(null);
+        handleSelect(null);
         setSearchValue("");
       }
     },
-    [options],
+    [handleSelect, options],
   );
 
   const textField = (
@@ -132,9 +129,7 @@ const CustomerSearch = () => {
       </BlockStack>
     </Card>
   );
-};
-
-export default CustomerSearch;
+}
 
 function createCustomerUrl(gid: string) {
   const customerId = gid.split("/").pop();

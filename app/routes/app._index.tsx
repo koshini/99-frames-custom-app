@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -19,14 +19,8 @@ import {
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { getVariants } from "app/utils/utils";
-import Customer from "../components/Customer";
-
-interface Customer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-}
+import type { Customer } from "../components/Customer";
+import { CustomerSearch } from "../components/Customer";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -81,10 +75,63 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   const formData = await request.formData();
+  console.log({ formData });
   const searchQuery = formData.get("searchQuery");
+  const action = formData.get("_action");
+  const customerId = formData.get("customerId");
+  const orderDetails = formData.get("orderDetails");
 
-  const response = await admin.graphql(
-    `
+  if (action === "createOrder") {
+    console.log("create");
+    console.log(orderDetails);
+    const orderDetailsArray = JSON.parse(orderDetails as string);
+    const lineItems = orderDetailsArray?.map((order) => ({
+      quantity: 1,
+      title: JSON.stringify(order),
+      priceSet: {
+        shopMoney: {
+          amount: parseFloat(order.subtotal),
+          currencyCode: "CAD",
+        },
+      },
+    }));
+    console.log(lineItems);
+    const response = await admin.graphql(
+      `
+        mutation OrderCreate($order: OrderCreateOrderInput!) {
+          orderCreate(order: $order) {
+            userErrors {
+              field
+              message
+            }
+            order {
+              id
+              customer {
+                id
+              }
+            }
+          }
+        }
+    `,
+      {
+        variables: {
+          order: {
+            currency: "CAD",
+            lineItems: [...lineItems],
+            ...(customerId ? { customerId } : {}),
+          },
+        },
+      },
+    );
+
+    const responseJson = await response.json();
+    console.log(JSON.stringify(responseJson.data.orderCreate));
+    return responseJson;
+  }
+
+  if (searchQuery) {
+    const response = await admin.graphql(
+      `
       query GetCustomers($query: String!) {
         customers(first: 10, query: $query) {
           edges {
@@ -98,18 +145,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
       }
     `,
-    {
-      variables: {
-        query: searchQuery,
+      {
+        variables: {
+          query: searchQuery,
+        },
       },
-    },
-  );
+    );
 
-  const responseJson = await response.json();
-  return json({ customer: responseJson.data.customers });
+    const responseJson = await response.json();
+    return json({ customer: responseJson.data.customers });
+  }
 };
 
 export default function Index() {
+  const fetcher = useFetcher();
   const { productData } = useLoaderData<typeof loader>();
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string>
@@ -124,7 +173,10 @@ export default function Index() {
   const [discount, setDiscount] = useState("0");
   const [total, setTotal] = useState(0);
   const [adjustedTotal, setAdjustedTotal] = useState(0);
-  const [orderDetails, setOrderDetails] = useState<any[]>([]); // New state for order details
+  const [orderDetails, setOrderDetails] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
 
   useEffect(() => {
     const width = parseFloat(dimensions.width);
@@ -140,10 +192,6 @@ export default function Index() {
     (dimension: "width" | "length") => (value: string) => {
       setDimensions((prev) => ({ ...prev, [dimension]: value }));
     };
-
-  const handleMouldingUnitPriceChange = (value: string) => {
-    setMouldingUnitPrice(value);
-  };
 
   const subtotal = useMemo(() => {
     let sum = 0;
@@ -249,11 +297,6 @@ export default function Index() {
     resetFields,
   ]);
 
-  const handleCreateOrder = () => {
-    console.log(orderDetails);
-    // TODO: create order mutation
-  };
-
   return (
     <Page>
       <TitleBar title="Order Generator" />
@@ -321,7 +364,7 @@ export default function Index() {
                     type="number"
                     prefix="$"
                     value={mouldingUnitPrice}
-                    onChange={handleMouldingUnitPriceChange}
+                    onChange={setMouldingUnitPrice}
                     autoComplete="off"
                   />
                   {/* Glass options */}
@@ -557,10 +600,32 @@ export default function Index() {
                   )}
                 </BlockStack>
               </Card>
-              <Customer />
-              <Button variant="primary" onClick={handleCreateOrder}>
-                Create Order
-              </Button>
+              <CustomerSearch
+                selectedCustomer={selectedCustomer}
+                handleSelect={setSelectedCustomer}
+              />
+              <fetcher.Form method="post">
+                {/* <Button
+                  variant="primary"
+                  onClick={handleCreateOrder}
+                  id="create"
+                >
+                  Create Order
+                </Button> */}
+                <input
+                  type="hidden"
+                  name="customerId"
+                  value={selectedCustomer?.id}
+                />
+                <input
+                  type="hidden"
+                  name="orderDetails"
+                  value={JSON.stringify(orderDetails)}
+                />
+                <button name="_action" value="createOrder" type="submit">
+                  Create Order
+                </button>
+              </fetcher.Form>
               <Button tone="critical" onClick={resetEverything}>
                 Reset Order
               </Button>

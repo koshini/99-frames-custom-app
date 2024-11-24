@@ -3,7 +3,7 @@
 client_id = "af40503afb9efb9b991a9ee8e39042b4"
 name = "99-frames-price-calculator"
 handle = "99-frames-price-calculator"
-application_url = "https://citations-records-contains-temperature.trycloudflare.com"
+application_url = "https://messaging-thinking-julia-clone.trycloudflare.com"
 embedded = true
 
 [build]
@@ -20,7 +20,19 @@ redirect_urls = [
   "https://99-frames-price-calculator.fly.dev/auth/callback",
   "https://citations-records-contains-temperature.trycloudflare.com/auth/callback",
   "https://citations-records-contains-temperature.trycloudflare.com/auth/shopify/callback",
-  "https://citations-records-contains-temperature.trycloudflare.com/api/auth/callback"
+  "https://citations-records-contains-temperature.trycloudflare.com/api/auth/callback",
+  "https://characterization-authentication-association-inherited.trycloudflare.com/auth/callback",
+  "https://characterization-authentication-association-inherited.trycloudflare.com/auth/shopify/callback",
+  "https://characterization-authentication-association-inherited.trycloudflare.com/api/auth/callback",
+  "https://stakeholders-each-author-fabrics.trycloudflare.com/auth/callback",
+  "https://stakeholders-each-author-fabrics.trycloudflare.com/auth/shopify/callback",
+  "https://stakeholders-each-author-fabrics.trycloudflare.com/api/auth/callback",
+  "https://suited-blair-latvia-athletics.trycloudflare.com/auth/callback",
+  "https://suited-blair-latvia-athletics.trycloudflare.com/auth/shopify/callback",
+  "https://suited-blair-latvia-athletics.trycloudflare.com/api/auth/callback",
+  "https://messaging-thinking-julia-clone.trycloudflare.com/auth/callback",
+  "https://messaging-thinking-julia-clone.trycloudflare.com/auth/shopify/callback",
+  "https://messaging-thinking-julia-clone.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
