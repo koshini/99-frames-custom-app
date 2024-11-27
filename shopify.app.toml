@@ -3,7 +3,7 @@
 client_id = "af40503afb9efb9b991a9ee8e39042b4"
 name = "99-frames-price-calculator"
 handle = "99-frames-price-calculator"
-application_url = "https://messaging-thinking-julia-clone.trycloudflare.com"
+application_url = "https://patrick-researchers-factor-read.trycloudflare.com"
 embedded = true
 
 [build]
@@ -32,7 +32,19 @@ redirect_urls = [
   "https://suited-blair-latvia-athletics.trycloudflare.com/api/auth/callback",
   "https://messaging-thinking-julia-clone.trycloudflare.com/auth/callback",
   "https://messaging-thinking-julia-clone.trycloudflare.com/auth/shopify/callback",
-  "https://messaging-thinking-julia-clone.trycloudflare.com/api/auth/callback"
+  "https://messaging-thinking-julia-clone.trycloudflare.com/api/auth/callback",
+  "https://granny-truck-nu-imaging.trycloudflare.com/auth/callback",
+  "https://granny-truck-nu-imaging.trycloudflare.com/auth/shopify/callback",
+  "https://granny-truck-nu-imaging.trycloudflare.com/api/auth/callback",
+  "https://meet-existed-agenda-dirt.trycloudflare.com/auth/callback",
+  "https://meet-existed-agenda-dirt.trycloudflare.com/auth/shopify/callback",
+  "https://meet-existed-agenda-dirt.trycloudflare.com/api/auth/callback",
+  "https://wool-springer-handled-cast.trycloudflare.com/auth/callback",
+  "https://wool-springer-handled-cast.trycloudflare.com/auth/shopify/callback",
+  "https://wool-springer-handled-cast.trycloudflare.com/api/auth/callback",
+  "https://patrick-researchers-factor-read.trycloudflare.com/auth/callback",
+  "https://patrick-researchers-factor-read.trycloudflare.com/auth/shopify/callback",
+  "https://patrick-researchers-factor-read.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
